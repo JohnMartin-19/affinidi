@@ -13,6 +13,8 @@ app.use(session({
     resave: false ,
     saveUninitialized: false
 }));
+app.use(passport.initialize());
+app.use(passport.session());
 
 // 3. Define application end-points
 app.get("/", (req, res) => {
@@ -24,12 +26,15 @@ app.get('/login',
         next();
     },
 );
+passport.authenticate('affinidi-login',{scope:'openid'})
 
-app.get('/login/callback', (req, res, next) => {})
+app.get('/login/callback', (req, res, next) => {
+    passport.authenticate('affinidi-login', {successRedirect: '/protected', failureRedirect: '/'})(req,res,next)
+})
 
 app.get("/protected", (req, res) => {
     res.header("Content-Type", 'application/json');
-    res.end("Protected Content for Authenticated Users");
+    res.end("JSON.stringify(req.user, null, 4)");
 })
 
 // 4. Start the http server
