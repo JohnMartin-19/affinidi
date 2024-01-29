@@ -13,8 +13,7 @@ app.use(session({
     resave: false ,
     saveUninitialized: false
 }));
-app.use(passport.initialize());
-app.use(passport.session());
+
 
 // 3. Define application end-points
 app.get("/", (req, res) => {
@@ -39,7 +38,8 @@ app.get("/protected", (req, res) => {
 
 // 4. Start the http server
 const httpServer = http.createServer(app)
-httpServer.listen(8080, () => {
+httpServer.listen(8080, (req,res,next) => {
+    passport.authenticate('affinidi-login', {successRedirect: '/protected', failureRedirect: '/'})(req,res,next)
     console.log(`Hello World - Affinidi Login : Up and running on 8080`)
 })
 
@@ -58,6 +58,8 @@ Issuer.discover(process.env.issuer).then(function (oidcIssuer) {
     // 5c. Provide this strategy to the passport middleware
     passport.use(
       'affinidi-login', new Strategy({ client, passReqToCallback: true }, (req, tokenSet, userinfo, done) => {
+        app.use(passport.initialize());
+        app.use(passport.session());
         req.session.tokenSet = tokenSet;
         req.session.userinfo = userinfo;
         return done(null, tokenSet.claims());
@@ -69,4 +71,6 @@ Issuer.discover(process.env.issuer).then(function (oidcIssuer) {
   });
   passport.deserializeUser(function (user, done) {
     done(null, user);
-  });
+  },
+  passport.authenticate('affinidi-login',{scope:'openid'}));
+  
